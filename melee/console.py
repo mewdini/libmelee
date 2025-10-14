@@ -206,7 +206,7 @@ def get_dolphin_version(path: str) -> DolphinVersion:
         )
 
     # Ishiiruka on MacOS behaves a bit differently.
-    if platform.system() in ['Darwin']:
+    if platform.system() == 'Darwin':
         # Sadly playback dolphin doesn't output anything differently, so we
         # just assume it's a netplay build.
         assert result.returncode == 255
@@ -217,7 +217,7 @@ def get_dolphin_version(path: str) -> DolphinVersion:
         )
     
     # Ishiiruka on Linux behaves a bit differently.
-    if platform.system() in ['Linux']:
+    if platform.system() == 'Linux':
         # Sadly playback dolphin doesn't output anything differently, so we
         # just assume it's a netplay build.
         assert result.returncode == 255
