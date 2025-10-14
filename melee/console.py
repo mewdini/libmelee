@@ -217,6 +217,9 @@ def get_dolphin_version(path: str) -> DolphinVersion:
         )
 
     print('Contents:', output)
+    print('Return code:', result.returncode)
+    print('stdout:', result.stdout)
+    print('stderr:', result.stderr)
 
     # Ishiiruka
     contents = output.split(' - ')
