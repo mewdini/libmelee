@@ -216,6 +216,8 @@ def get_dolphin_version(path: str) -> DolphinVersion:
             build=DolphinBuild.NETPLAY,
         )
 
+    print('Contents:', output)
+
     # Ishiiruka
     contents = output.split(' - ')
     if contents[0] != 'Faster Melee':
