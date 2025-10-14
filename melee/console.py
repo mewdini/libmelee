@@ -205,8 +205,8 @@ def get_dolphin_version(path: str) -> DolphinVersion:
             build=DolphinBuild.NETPLAY,
         )
 
-    # Ishiiruka on MacOS behaves a bit differently.
-    if platform.system() == 'Darwin':
+    # Ishiiruka on MacOS and Linux behaves a bit differently.
+    if platform.system() in ['Darwin', 'Linux']:
         # Sadly playback dolphin doesn't output anything differently, so we
         # just assume it's a netplay build.
         assert result.returncode == 255
@@ -215,11 +215,6 @@ def get_dolphin_version(path: str) -> DolphinVersion:
             version=output,
             build=DolphinBuild.NETPLAY,
         )
-
-    print('Contents:', output)
-    print('Return code:', result.returncode)
-    print('stdout:', result.stdout)
-    print('stderr:', result.stderr)
 
     # Ishiiruka
     contents = output.split(' - ')
