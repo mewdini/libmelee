@@ -284,6 +284,7 @@ class Console:
                  fullscreen: bool = True,
                  gfx_backend: str = "",
                  disable_audio: bool = False,
+                 audio_backend: str = "",
                  overclock: Optional[float] = None,
                  emulation_speed: float = 1.0,
                  save_replays: bool = True,
@@ -393,6 +394,7 @@ class Console:
         self.fullscreen = fullscreen
         self.gfx_backend = gfx_backend
         self.disable_audio = disable_audio
+        self.audio_backend = audio_backend
         self.overclock = overclock
         self.emulation_speed = emulation_speed
         self.save_replays = save_replays
@@ -629,6 +631,8 @@ class Console:
         if self.disable_audio:
             disable_str = "No Audio Output" if self.is_mainline else "No audio output"
             config.set("DSP", "Backend", disable_str)
+        elif self.audio_backend:
+            config.set("DSP", "Backend", self.audio_backend)
 
         if self.overclock:
             config.set("Core", "Overclock", str(self.overclock))
