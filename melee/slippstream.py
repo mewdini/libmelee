@@ -93,7 +93,7 @@ class SlippstreamWorker:
                 'Could not receive CONNECT event at address '
                 f'{self.address}:{self.port}.')
             return False
-        except OSError:
+        except OSError as e:
             logging.error(e)
             return False
 
