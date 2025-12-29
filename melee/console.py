@@ -1520,8 +1520,13 @@ class Console:
         if self._stadium_transformation is None:
             raise ValueError("Stadium transformations not initialized")
 
-        self._stadium_transformation.event = gamestate_lib.StadiumTransformationEvent(
-            np.ndarray((1,), ">H", event_bytes, 0x5)[0])
+        # TODO: we always get a 1 at the start of a new transformation, which is
+        # not a valid StadiumTransformationEvent. Figure out what that is.
+        event = np.ndarray((1,), ">B", event_bytes, 0x5)[0]
+        try:
+            self._stadium_transformation.event = gamestate_lib.StadiumTransformationEvent(event)
+        except ValueError:
+            self._stadium_transformation.event = event
 
         self._stadium_transformation.type = gamestate_lib.StadiumTransformationType(
             np.ndarray((1,), ">H", event_bytes, 0x7)[0])
