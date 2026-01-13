@@ -479,7 +479,7 @@ class MenuHelper():
         if gamestate.frame == 0:
             self.stage_selected = False
 
-        if self.stage_selected:
+        if self.stage_selected or not autostart:
             # Select Sheik during local play.
             # TODO: doesn't do anything during netplay, maybe remove?
             if character is enums.Character.SHEIK:
