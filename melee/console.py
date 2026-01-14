@@ -7,8 +7,8 @@ is your method to start and stop Dolphin, set configs, and get the latest GameSt
 from collections import defaultdict
 import dataclasses
 import enum
+import json
 from typing import Optional
-from packaging import version
 
 import logging
 import time
@@ -21,7 +21,6 @@ import platform
 import math
 import base64
 import numpy as np
-from pathlib import Path
 import shutil
 import tempfile
 
@@ -55,34 +54,36 @@ def _ignore_fifos(src, names):
 def _copytree_safe(src, dst):
     shutil.copytree(src, dst, ignore=_ignore_fifos)
 
-def default_dolphin_install_path() -> str:
+def default_dolphin_install_path() -> tuple[str, bool]:
     os_name = platform.system()
     home = os.path.expanduser("~")
 
     if os_name == "Windows":
-        path = os.path.join(
-            home, 'AppData', 'Roaming', 'Slippi Launcher', 'netplay')
-        if not os.path.isdir(path):
-            raise FileNotFoundError("Could not find dolphin install directory.")
-        return path
+        slippi_launcher = os.path.join(
+            home, 'AppData', 'Roaming', 'Slippi Launcher')
 
     elif os_name == "Darwin":
         slippi_launcher = os.path.join(
             home, 'Library', 'Application Support', 'Slippi Launcher')
-        options = [
-            'netplay-beta/Slippi_Dolphin.app',
-            'netplay/Slippi Dolphin.app',
-        ]
-        for option in options:
-            path = os.path.join(slippi_launcher, option)
-            if os.path.isdir(path):
-                return path
-        raise FileNotFoundError("Could not find dolphin install directory.")
 
     elif os_name == "Linux":
-        raise NotImplementedError("Manually specify the dolphin path.")
+        slippi_launcher = os.path.join(
+            home, '.config', 'Slippi Launcher')
+    else:
+        raise NotImplementedError(f"Unsupported OS '{os_name}'")
 
-    raise NotImplementedError(f"Unsupported OS '{os_name}'")
+    # Read the settings file to determine which dolphin version to use
+    settings_path = os.path.join(slippi_launcher, 'Settings')
+    with open(settings_path, 'r') as f:
+        settings = json.load(f)
+    is_mainline = settings["settings"]["useNetplayBeta"]
+
+    path = os.path.join(slippi_launcher, "netplay-beta" if is_mainline else "netplay")
+    if os.path.isdir(path):
+        return path, is_mainline
+
+    raise FileNotFoundError("Could not find dolphin install directory.")
+
 
 def _is_mainline(path: str) -> bool:
     if 'netplay-beta' in path:
@@ -91,10 +92,9 @@ def _is_mainline(path: str) -> bool:
         raise ValueError(f"Unknown path '{path}'")
     return False
 
-def _default_home_path(path: str) -> str:
+def _default_home_path(path: str, is_mainline: bool) -> str:
     # TODO: this function hasn't been tested in a while, some locations have moved
     home = os.path.expanduser("~")
-    is_mainline = _is_mainline(path)
 
     if platform.system() == "Darwin":
         return os.path.join(
@@ -103,15 +103,17 @@ def _default_home_path(path: str) -> str:
             "netplay-beta" if is_mainline else "netplay",
             "User"
         )
+    elif platform.system() == "Linux":
+        if is_mainline:
+            return os.path.join(home, ".config", "slippi-dolphin", "netplay-beta")
+        else:
+            return os.path.join(home, ".config", "SlippiOnline")
+
 
     # Next check if the home path is in the same dir as the exe
     user_path = path + "/User/"
     if os.path.isdir(user_path):
         return user_path
-
-    # Otherwise, this must be an appimage install. Use the .config
-    if platform.system() == "Linux":
-        return os.path.join(home, ".config", "SlippiOnline")
 
     raise FileNotFoundError("Could not find dolphin home directory.")
 
@@ -129,22 +131,35 @@ def get_exe_path(path: str) -> str:
     if os.path.isfile(path):
         return path
 
+    # If it isn't the path to the exe, it is the install path
     is_mainline = _is_mainline(path)
 
-    exe_path = [path]
     if platform.system() == "Darwin":
-        exe_path.extend(["Contents", "MacOS"])
+        exe_path = os.path.join(
+            path,
+            'Slippi_Dolphin.app' if is_mainline else 'Slippi Dolphin.app',
+            'Contents', 'MacOS',
+            'Slippi_Dolphin' if is_mainline else 'Slippi Dolphin')
 
-    if platform.system() == "Windows":
-        exe_name = "Slippi Dolphin.exe"
-    elif platform.system() == "Darwin":
-        # TODO: exe name varies between Ishiiruka and mainline
-        exe_name = "Slippi_Dolphin" if is_mainline else "Slippi Dolphin"
-    else: # Linux
-        exe_name = "dolphin-emu"
+    elif platform.system() == "Windows":
+        # TODO: verify the mainline name on Windows
+        exe_name = "Slippi_Dolphin.exe" if is_mainline else "Slippi Dolphin.exe"
+        exe_path = os.path.join(path, exe_name)
 
-    return os.path.join(*exe_path, exe_name)
+    elif platform.system() == "Linux":
+        if is_mainline:
+            exe_name = 'Slippi_Netplay_Mainline-x86_64.AppImage'
+        else:
+            exe_name = 'Slippi_Online-x86_64.AppImage'
+        exe_path = os.path.join(path, exe_name)
 
+    else:
+        raise NotImplementedError(f"Unsupported OS '{platform.system()}'")
+
+    if not os.path.isfile(exe_path):
+        raise FileNotFoundError(f'Could not find dolphin executable at {exe_path}')
+
+    return exe_path
 
 # TODO: custom mainline builds can have headless support -- we should include
 # that in the version output and parse it in get_dolphin_version
@@ -153,10 +168,6 @@ class DolphinBuild(enum.Enum):
     PLAYBACK = enum.auto()
     EXI_AI = enum.auto()
 
-_STRING_TO_BUILD = {
-    'Playback': DolphinBuild.PLAYBACK,
-    'ExiAI': DolphinBuild.EXI_AI,
-}
 
 @dataclasses.dataclass
 class DolphinVersion:
@@ -190,51 +201,61 @@ def get_dolphin_version(path: str) -> DolphinVersion:
             build=DolphinBuild.NETPLAY,
         )
 
-    # Ishiiruka actually gives returncode 1 and puts
-    # "Faster Melee - Slippi (3.4.0)" in stderr!
-    output = result.stdout if result.returncode == 0 else result.stderr
-    output = output.strip()
+    elif platform.system() == 'Linux':
+        # Mainline
+        if result.returncode == 0:
+            output = result.stdout.strip()
+            assert 'mainline' in output
+            return DolphinVersion(
+                mainline=True,
+                version=output,
+                build=DolphinBuild.NETPLAY,
+            )
 
-    # Mainline versions look like "4.0.0-mainline-beta.4"
-    if output.find('mainline') != -1:
-        version = output.split('-')[0]
-        return DolphinVersion(
-            mainline=True,
-            version=version,
-            # Mainline only supports netplay for now.
-            build=DolphinBuild.NETPLAY,
-        )
+        # Ishiiruka
+        if result.returncode == 255:
+            # Odd that output is in stdout instead of stderr
+            output = result.stdout.strip()
+            return DolphinVersion(
+                mainline=False,
+                version=output,
+                build=DolphinBuild.NETPLAY,
+            )
 
-    # Ishiiruka on MacOS behaves a bit differently.
-    if platform.system() == 'Darwin':
-        # Sadly playback dolphin doesn't output anything differently, so we
-        # just assume it's a netplay build.
-        assert result.returncode == 255
+        # ExiAI Ishiiruka
+        if result.returncode == 1:
+            output = result.stderr.strip()
+            contents = output.split(' - ')
+            if contents[0] != 'Faster Melee' or contents[2] != 'ExiAI':
+                raise ValueError(f'Unexpected dolphin version {output}')
+
+            # "Slippi (VERSION)"
+            begin = contents[1].find('(') + 1
+            end = contents[1].find(')')
+            version = contents[1][begin:end]
+
+            return DolphinVersion(
+                mainline=False,
+                version=version,
+                build=DolphinBuild.EXI_AI,
+            )
+
+        raise RuntimeError(f'Unexpected return code {result.returncode} from dolphin')
+
+    elif platform.system() == 'Darwin':
+        output = result.stdout if result.returncode == 0 else result.stderr
+        output = output.strip()
+
+        mainline = 'mainline' in output
         return DolphinVersion(
-            mainline=False,
+            mainline=mainline,
             version=output,
             build=DolphinBuild.NETPLAY,
         )
 
-    # Ishiiruka
-    contents = output.split(' - ')
-    if contents[0] != 'Faster Melee':
-        raise ValueError(f'Unexpected dolphin version {output}')
-
-    # "Slippi (VERSION)"
-    begin = contents[1].find('(') + 1
-    end = contents[1].find(')')
-    version = contents[1][begin:end]
-
-    if len(contents) == 2:
-        build = DolphinBuild.NETPLAY
     else:
-        build_str = contents[2]
-        if build_str not in _STRING_TO_BUILD:
-            raise ValueError(f'Unexpected dolphin version {output}')
-        build = _STRING_TO_BUILD[build_str]
+        raise NotImplementedError(f"Unsupported OS '{platform.system()}'")
 
-    return DolphinVersion(False, version, build)
 
 @dataclasses.dataclass
 class DumpConfig:
@@ -423,8 +444,18 @@ class Console:
                 if path:
                     raise ValueError("path specified for remote connection")
             else:
-                if not self.path:
-                    self.path = default_dolphin_install_path()
+                path_given = self.path is not None
+
+                if self.path is None:
+                    self.path, self.is_mainline = default_dolphin_install_path()
+
+                self.exe_path = get_exe_path(self.path)
+                self.dolphin_version = get_dolphin_version(self.exe_path)
+
+                if not path_given and self.dolphin_version.mainline != self.is_mainline:
+                    raise RuntimeError(f"Detected dolphin version does not match expected version")
+                else:
+                    self.is_mainline = self.dolphin_version.mainline
 
                 if tmp_home_directory:
                     self.temp_dir = tempfile.mkdtemp(prefix='libmelee_')
@@ -432,10 +463,6 @@ class Console:
                     if copy_home_directory:
                         _copytree_safe(self._get_dolphin_home_path(), home_dir)
                     self.dolphin_home_path = home_dir
-
-                self.exe_path = get_exe_path(self.path)
-                self.dolphin_version = get_dolphin_version(self.exe_path)
-                self.is_mainline = self.dolphin_version.mainline
 
                 if gfx_backend == 'Null':
                     if not (self.is_mainline or self.dolphin_version.build == DolphinBuild.EXI_AI):
@@ -496,7 +523,7 @@ class Console:
 
         assert self.path, "Must specify a dolphin path."
         # TODO: this method doesn't work if self.path points the executable
-        return _default_home_path(self.path)
+        return _default_home_path(self.path, self.is_mainline)
 
     def _get_dolphin_config_path(self):
         """ Return the path to dolphin's config directory."""
