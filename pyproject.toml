@@ -20,7 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "pyenet @ git+https://github.com/piqueserver/pyenet",
+    "pyenet",
     "py-ubjson",
     "numpy",
     "pywin32; platform_system == 'Windows'",
