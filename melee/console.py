@@ -206,10 +206,11 @@ def get_dolphin_version(path: str) -> DolphinVersion:
         if result.returncode == 0:
             output = result.stdout.strip()
             assert 'mainline' in output
+            build = DolphinBuild.EXI_AI if 'ExiAI' in output else DolphinBuild.NETPLAY
             return DolphinVersion(
                 mainline=True,
                 version=output,
-                build=DolphinBuild.NETPLAY,
+                build=build,
             )
 
         # Ishiiruka
