@@ -311,6 +311,7 @@ class Console:
                  emulation_speed: float = 1.0,
                  save_replays: bool = True,
                  replay_dir: Optional[str] = None,
+                 replay_monthly_folders: Optional[bool] = None,
                  user_json_path: Optional[str] = None,
                  log_level: int = 3,  # WARN, see Source/Core/Common/Logging/Log.h
                  log_types: list[str] = ['SLIPPI'],
@@ -421,6 +422,7 @@ class Console:
         self.emulation_speed = emulation_speed
         self.save_replays = save_replays
         self.replay_dir = replay_dir
+        self.replay_monthly_folders = replay_monthly_folders
         self.user_json_path = user_json_path
         self.log_level = log_level
         self.log_types = log_types
@@ -642,6 +644,8 @@ class Console:
           config.set("Slippi", "SaveReplays", str(self.save_replays))
           if self.replay_dir:
               config.set("Slippi", "ReplayDir", self.replay_dir)
+          if self.replay_monthly_folders is not None:
+              config.set("Slippi", "ReplayMonthlyFolders", str(self.replay_monthly_folders))
         else:
           config.set("Core", 'SlippiEnableSpectator', "True")
           config.set("Core", 'SlippiSpectatorLocalPort', str(self.slippi_port))
@@ -651,6 +655,8 @@ class Console:
           config.set("Core", "SlippiSaveReplays", str(self.save_replays))
           if self.replay_dir:
               config.set("Core", "SlippiReplayDir", self.replay_dir)
+          if self.replay_monthly_folders is not None:
+              config.set("Core", "SlippiReplayMonthlyFolders", str(self.replay_monthly_folders))
 
         # Turn on background input so we don't need to have window focus on dolphin
         config.set("Input", 'backgroundinput', "True")
