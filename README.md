@@ -10,10 +10,14 @@ This is a fork of [libmelee](https://github.com/altf4/libmelee) geared toward ma
 * Various other miscellaneous improvements, such as being able to control dolphin's debug logging, interfacing with [mainline slippi-dolphin](https://github.com/project-slippi/dolphin), setting infinite time mode, and playing as Sheik.
 
 ## Installing Libmelee
-To install this fork, either clone it and install locally, or run
-
+This fork is now the source for the `melee` package on pypi, starting with version `0.45.0`, and so can be installed with
 ```
-pip install "git+https://github.com/vladfi1/libmelee"
+pip install melee
+```
+
+To upgrade, run
+```
+pip install -U melee
 ```
 
 ## Setup Instructions
