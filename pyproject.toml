@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "melee"
+dynamic = ["version"]
+description = "Open API written in Python 3 for making your own Smash Bros: Melee AI that works with Slippi Online"
+readme = "README.md"
+license = "LGPL-3.0-only"
+requires-python = ">=3.10"
+authors = [
+    { name = "AltF4,vladfi1", email = "vladfi2@gmail.com" }
+]
+keywords = ["dolphin", "AI", "video games", "melee", "ssbm", "smash bros", "slippi"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "pyenet-vladfi",  # TODO: switch back to pyenet when they publish 1.3.18
+    "py-ubjson",
+    "numpy",
+    "pywin32; platform_system == 'Windows'",
+    "packaging",
+]
+
+[project.urls]
+Homepage = "https://github.com/vladfi1/libmelee"
+Repository = "https://github.com/vladfi1/libmelee"
+
+[tool.setuptools.packages.find]
+include = ["melee*"]
+
+[tool.setuptools.package-data]
+melee = ["*.csv", "*.ini"]
+
+[tool.setuptools.dynamic]
+version = {attr = "melee.version.__version__"}

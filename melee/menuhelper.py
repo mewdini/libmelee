@@ -83,13 +83,12 @@ class MenuHelper():
             self.skip_postgame(controller=controller)
         # If we're at the stage select screen, choose a stage
         elif gamestate.menu_state == enums.Menu.STAGE_SELECT:
-            if not autostart:
-                return
             self.choose_stage(stage=stage_selected,
                               gamestate=gamestate,
                               controller=controller,
                               character=character_selected,
-                              frozen_stadium=frozen_stadium)
+                              frozen_stadium=frozen_stadium,
+                              autostart=autostart)
         elif gamestate.menu_state == enums.Menu.MAIN_MENU:
             if connect_code:
                 self.choose_direct_online(gamestate=gamestate, controller=controller)
@@ -461,6 +460,7 @@ class MenuHelper():
         controller: Controller,
         character: enums.Character,
         frozen_stadium: bool = True,
+        autostart: bool = False,
     ):
         """Choose a stage from the stage select menu
 
@@ -471,14 +471,17 @@ class MenuHelper():
             gamestate (gamestate.GameState): The current gamestate
             controller (controller.Controller): The controller object to press
             frozen_stadium (bool): Whether to use Frozen Stadium as the stage.
+            autostart (bool): Whether to actually select the stage and start
+                the match. Should only be true for one controller.
         """
         # TODO: why did I pick this as the condition to reset stage_selected?
         # I should implement proper reset logic.
         if gamestate.frame == 0:
             self.stage_selected = False
 
-        if self.stage_selected:
+        if self.stage_selected or not autostart:
             # Select Sheik during local play.
+            # TODO: doesn't do anything during netplay, maybe remove?
             if character is enums.Character.SHEIK:
                 controller.press_button(enums.Button.BUTTON_A)
             else:
@@ -487,6 +490,9 @@ class MenuHelper():
 
         if gamestate.frame < 20:
             controller.release_all()
+            return
+
+        if not autostart:
             return
 
         target_x, target_y = 0, 0

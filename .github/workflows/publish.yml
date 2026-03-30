@@ -1,7 +1,19 @@
-name: Publish to TestPyPI
+name: Publish to PyPI
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'Publish target'
+        required: true
+        default: 'pypi'
+        type: choice
+        options:
+          - pypi
+          - testpypi
 
 jobs:
   build:
@@ -14,8 +26,6 @@ jobs:
           python-version: '3.13'
       - name: Install build tools
         run: python -m pip install build
-      - name: Override package name for TestPyPI
-        run: sed -i 's/^name = "melee"/name = "melee-vladfi1"/' pyproject.toml
       - name: Build sdist and wheel
         run: python -m build
       - name: Upload artifacts
@@ -49,19 +59,19 @@ jobs:
         run: python test.py
 
   publish:
-    name: Publish to TestPyPI
+    name: Publish to ${{ inputs.target || 'pypi' }}
     needs: test
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+    environment: ${{ inputs.target || 'pypi' }}
     steps:
       - name: Download built distribution
         uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
-      - name: Publish to TestPyPI
+      - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: https://test.pypi.org/legacy/
-          verbose: true
+          repository-url: ${{ inputs.target == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}

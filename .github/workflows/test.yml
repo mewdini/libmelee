@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ['3.10', '3.11']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
 
     steps:
@@ -19,37 +19,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install general dependencies (windows)
-      if: matrix.os == 'windows-latest'
-      run: python -m pip install --upgrade pip setuptools wheel
+    - name: Install Libmelee
+      run: pip install .
 
-    - name: Install general dependencies (osx)
-      if: matrix.os == 'macos-latest'
-      run: python3 -m pip install --upgrade --break-system-packages pip setuptools wheel
-
-    - name: Install general dependencies (linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: python3 -m pip install --upgrade pip setuptools wheel
-
-    - name: Install libmelee dependencies (windows)
-      if: matrix.os == 'windows-latest'
-      run: python -m pip install .
-
-    - name: Install libmelee dependencies (osx)
-      if: matrix.os == 'macos-latest'
-      run: python3 -m pip install --break-system-packages .
-
-    - name: Install libmelee dependencies (linux)
-      if: matrix.os == 'ubuntu-latest'
-      run: python3 -m pip install .
-
-    - name: Test with unittest (windows)
-      if: matrix.os == 'windows-latest'
+    - name: Run tests
       run: python test.py
-
-    - name: Test with unittest (linux/osx)
-      if: matrix.os != 'windows-latest'
-      run: python3 test.py
 
   # "live" test with a running emulator, only on Ubuntu
   test_live:
@@ -57,7 +31,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ['3.10', '3.11']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
         os: ['ubuntu-latest']
 
     steps:

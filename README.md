@@ -10,17 +10,21 @@ This is a fork of [libmelee](https://github.com/altf4/libmelee) geared toward ma
 * Various other miscellaneous improvements, such as being able to control dolphin's debug logging, interfacing with [mainline slippi-dolphin](https://github.com/project-slippi/dolphin), setting infinite time mode, and playing as Sheik.
 
 ## Installing Libmelee
-To install this fork, either clone it and install locally, or run
-
+This fork is now the source for the `melee` package on pypi, starting with version `0.45.0`, and so can be installed with
 ```
-pip install "git+https://github.com/vladfi1/libmelee"
+pip install melee
+```
+
+To upgrade, run
+```
+pip install -U melee
 ```
 
 ## Setup Instructions
 
 Linux / OSX / Windows
 
-1. You can install and configure Slippi just like you would for rollback netplay -- see https://slippi.gg for instructions. If you want to use fast-forward mode, you will need to use my [fork](https://github.com/vladfi1/slippi-Ishiiruka/tree/exi-ai-rebase) of slippi-Ishiiruka. A prebuilt Linux AppImage is available [here](https://github.com/vladfi1/slippi-Ishiiruka/releases/download/exi-ai-0.1.0/Slippi_Online-x86_64-ExiAI.AppImage), which can be used like a regular executable. This build is also headless, meaning it has no graphical elements at all. There is also a [Linux mainline build](https://github.com/vladfi1/dolphin/releases/tag/slippi-nogui-v0.1.0) that can run either headless or with graphics (but not in fast-forward mode).
+1. You can install and configure Slippi just like you would for rollback netplay -- see https://slippi.gg for instructions. If you want to use fast-forward mode, you will need to use my [fork](https://github.com/vladfi1/slippi-Ishiiruka/tree/exi-ai-rebase) of slippi-Ishiiruka. A prebuilt Linux AppImage is available [here](https://github.com/vladfi1/slippi-Ishiiruka/releases/download/exi-ai-0.2.0/Slippi_Online-x86_64-ExiAI.AppImage), which can be used like a regular executable. This build is also headless, meaning it has no graphical elements at all. There is also a [Linux mainline build](https://github.com/vladfi1/dolphin/releases/tag/slippi-nogui-v0.1.0) that can run either headless or with graphics (but not in fast-forward mode).
 
 2. If you want to play interactively with or against your AI, you'll probably want a GameCube Adapter, available on [Amazon](https://www.amazon.com/Super-Smash-GameCube-Adapter-Wii-U/dp/B00L3LQ1FI). Alternatively the [HitBox adapter](https://www.hitboxarcade.com/products/gamecube-controller-adapter) works well too.
 
